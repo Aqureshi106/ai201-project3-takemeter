@@ -1,11 +1,8 @@
 """
 Scrape r/QuantumComputing posts and save to dataset.csv.
-Run this in Google Colab or locally with Python 3.
+No API credentials required — uses Reddit's public JSON endpoint.
 
-Usage in Colab:
-  1. Upload this file or paste the code into a cell
-  2. Run it — dataset.csv will be saved to your Colab files
-  3. Download dataset.csv and label the 'label' column
+Run in Google Colab or locally with Python 3.
 """
 
 import requests
@@ -14,12 +11,12 @@ import time
 
 SUBREDDIT = "QuantumComputing"
 HEADERS = {"User-Agent": "ai201-takemeter-scraper/1.0"}
-MIN_WORDS = 15  # skip posts shorter than this
+MIN_WORDS = 15
 
 
-def fetch_posts(sort: str, limit: int = 100, after: str = None) -> list[dict]:
+def fetch_posts(sort: str, after: str = None) -> tuple[list, str | None]:
     url = f"https://www.reddit.com/r/{SUBREDDIT}/{sort}.json"
-    params = {"limit": limit, "raw_json": 1}
+    params = {"limit": 100, "raw_json": 1}
     if after:
         params["after"] = after
     resp = requests.get(url, headers=HEADERS, params=params, timeout=10)
@@ -31,7 +28,7 @@ def fetch_posts(sort: str, limit: int = 100, after: str = None) -> list[dict]:
 def collect(sort: str, target: int = 100) -> list[dict]:
     posts, after, seen = [], None, set()
     while len(posts) < target:
-        children, after = fetch_posts(sort, limit=100, after=after)
+        children, after = fetch_posts(sort, after=after)
         if not children:
             break
         for child in children:
@@ -39,7 +36,6 @@ def collect(sort: str, target: int = 100) -> list[dict]:
             if p["id"] in seen:
                 continue
             seen.add(p["id"])
-            # Combine title + selftext body
             body = p.get("selftext", "").strip()
             body = "" if body in ("[removed]", "[deleted]") else body
             text = (p["title"] + " " + body).strip()
@@ -48,24 +44,24 @@ def collect(sort: str, target: int = 100) -> list[dict]:
             posts.append({
                 "id": p["id"],
                 "text": text,
-                "label": "",  # fill this in manually
+                "label": "",
                 "score": p.get("score", 0),
                 "url": "https://reddit.com" + p.get("permalink", ""),
             })
-        print(f"  [{sort}] collected {len(posts)} so far...")
+        print(f"  [{sort}] {len(posts)} posts so far...")
         if not after:
             break
-        time.sleep(1)  # be polite to Reddit's servers
+        time.sleep(1)
     return posts[:target]
 
 
 print("Fetching posts from r/QuantumComputing...")
 all_posts = []
-for sort in ("hot", "top", "new"):
-    all_posts.extend(collect(sort, target=100))
+for sort_type in ("hot", "top", "new"):
+    all_posts.extend(collect(sort_type, target=100))
     time.sleep(2)
 
-# Deduplicate by id
+# Deduplicate
 seen_ids = set()
 deduped = []
 for p in all_posts:
@@ -74,7 +70,7 @@ for p in all_posts:
         deduped.append(p)
 
 df = pd.DataFrame(deduped)[["text", "label", "score", "url"]]
-df = df.sample(frac=1, random_state=42).reset_index(drop=True)  # shuffle
+df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 
 print(f"\nTotal unique posts collected: {len(df)}")
 print(df["text"].str.split().str.len().describe().to_string())
