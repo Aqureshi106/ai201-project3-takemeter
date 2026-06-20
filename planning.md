@@ -2,11 +2,11 @@
 
 ## Community
 
-**r/QuantumComputing** (~170k members) — a subreddit for discussing quantum computing research, news, and education. The community spans researchers, students, and enthusiasts, which creates a wide quality spectrum: rigorous technical breakdowns sit alongside breathless hype posts and genuine beginner questions. This range makes it well-suited for discourse classification.
+**Hacker News** (news.ycombinator.com) — a tech-focused community where quantum computing posts and comments span a wide quality spectrum: rigorous technical breakdowns sit alongside breathless hype posts and general field discussion. The community's culture of linking claims to evidence makes the hype/technical boundary particularly meaningful to insiders.
 
 ## Community Description
 
-r/QuantumComputing is an active Reddit community where posts range from serious technical discussion of algorithms and error correction to sensational news headlines about quantum supremacy and stock prices. The quality distinction that matters here is whether a post engages with the actual technical substance of quantum computing or just reacts to its cultural/financial narrative. Regular members in this community are quick to call out overclaiming — the "Quantum Bullshit Detector" culture is real — which means this label boundary is meaningful to insiders.
+Hacker News is a tech community where quantum computing posts range from serious technical discussion of algorithms and error correction to sensational news headlines about quantum supremacy. The quality distinction that matters here is whether a post engages with the actual technical substance of quantum computing or just reacts to its cultural/financial narrative. HN's culture of demanding citations and calling out overclaiming makes the hype/technical label boundary especially meaningful to insiders.
 
 ---
 
@@ -51,11 +51,11 @@ A random post can be assigned to exactly one label in the majority of cases.
 
 ## Dataset Collection
 
-- **Source:** r/QuantumComputing (reddit.com/r/QuantumComputing)
-- **Collection method:** Manual copy-paste from Reddit — top posts (past year) and new posts
-- **Filtering:** Remove posts with no body text (image-only, link-only with no comment), mod announcements, and posts under 15 words
+- **Source:** Hacker News via Algolia HN Search API (hn.algolia.com)
+- **Collection method:** Programmatic scrape using `scrape_reddit.py` — queries: "quantum computing", "qubit", "quantum supremacy", "quantum error correction"
+- **Filtering:** Removed posts/comments under 15 words; stripped HTML tags from comments
 - **Target count:** 210 examples (~70 per label)
-- **Actual count:** TBD
+- **Actual count:** 282 scraped; label ~210 and discard remainder
 
 ## CSV Format
 

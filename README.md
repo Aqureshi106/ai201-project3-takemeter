@@ -15,7 +15,7 @@ ai201-project3-takemeter/
 
 ## Dataset
 
-- **Community:** r/QuantumComputing
+- **Community:** Hacker News (quantum computing posts & comments)
 - **Labels:** `hype`, `technical`, `discussion`
 - **Total examples:** <!-- e.g. 210 -->
 - **Label distribution:** <!-- e.g. hype: 70, technical: 70, discussion: 70 -->

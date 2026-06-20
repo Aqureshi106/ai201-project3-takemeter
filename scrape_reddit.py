@@ -1,70 +1,68 @@
 """
-Scrape r/QuantumComputing posts and save to dataset.csv.
-Requires Reddit API credentials (free):
-  1. Go to reddit.com/prefs/apps -> create app -> type: script
-  2. Add REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET to Colab Secrets
+Scrape Hacker News posts about quantum computing and save to dataset.csv.
+Uses the Algolia HN Search API — no credentials required.
+
+Run locally:  python scrape_reddit.py
+Run in Colab: upload and run as a cell (works from any IP)
 """
 
-import subprocess
-subprocess.run(["pip", "install", "-q", "praw"], check=True)
-
-import praw
+import re
+import requests
 import pandas as pd
 import time
-from google.colab import userdata
 
-REDDIT_CLIENT_ID     = userdata.get("REDDIT_CLIENT_ID")
-REDDIT_CLIENT_SECRET = userdata.get("REDDIT_CLIENT_SECRET")
-
-assert REDDIT_CLIENT_ID,     "Add REDDIT_CLIENT_ID to Colab Secrets"
-assert REDDIT_CLIENT_SECRET, "Add REDDIT_CLIENT_SECRET to Colab Secrets"
-
-reddit = praw.Reddit(
-    client_id=REDDIT_CLIENT_ID,
-    client_secret=REDDIT_CLIENT_SECRET,
-    user_agent="ai201-takemeter-scraper/1.0",
-)
-
-SUBREDDIT = "QuantumComputing"
+QUERIES = ["quantum computing", "qubit", "quantum supremacy", "quantum error correction"]
 MIN_WORDS = 15
 
 
-def collect(sort: str, target: int = 100) -> list[dict]:
-    sub = reddit.subreddit(SUBREDDIT)
-    if sort == "hot":
-        gen = sub.hot(limit=target * 2)
-    elif sort == "top":
-        gen = sub.top(limit=target * 2, time_filter="year")
-    else:
-        gen = sub.new(limit=target * 2)
+def fetch_page(query: str, page: int, tags: str) -> list[dict]:
+    url = "https://hn.algolia.com/api/v1/search"
+    params = {"query": query, "tags": tags, "hitsPerPage": 50, "page": page}
+    resp = requests.get(url, params=params, timeout=10)
+    resp.raise_for_status()
+    return resp.json().get("hits", [])
 
+
+def collect(query: str, tags: str, target: int) -> list[dict]:
     posts, seen = [], set()
-    for submission in gen:
-        if len(posts) >= target:
+    page = 0
+    while len(posts) < target:
+        hits = fetch_page(query, page=page, tags=tags)
+        if not hits:
             break
-        if submission.id in seen:
-            continue
-        seen.add(submission.id)
-        body = submission.selftext.strip()
-        body = "" if body in ("[removed]", "[deleted]") else body
-        text = (submission.title + " " + body).strip()
-        if len(text.split()) < MIN_WORDS:
-            continue
-        posts.append({
-            "id": submission.id,
-            "text": text,
-            "label": "",
-            "score": submission.score,
-            "url": "https://reddit.com" + submission.permalink,
-        })
-    print(f"  [{sort}] collected {len(posts)} posts")
-    return posts
+        for h in hits:
+            oid = h.get("objectID")
+            if oid in seen:
+                continue
+            seen.add(oid)
+            if tags == "story":
+                title = (h.get("title") or "").strip()
+                body = (h.get("story_text") or "").strip()
+                text = (title + " " + body).strip()
+            else:
+                raw = (h.get("comment_text") or "").strip()
+                text = re.sub(r"<[^>]+>", " ", raw).strip()
+            if len(text.split()) < MIN_WORDS:
+                continue
+            posts.append({
+                "id": oid,
+                "text": text,
+                "label": "",
+                "score": h.get("points") or 0,
+                "url": h.get("url") or f"https://news.ycombinator.com/item?id={oid}",
+                "hn_link": f"https://news.ycombinator.com/item?id={oid}",
+            })
+        page += 1
+        time.sleep(0.5)
+    return posts[:target]
 
 
-print("Fetching posts from r/QuantumComputing...")
+print("Fetching Hacker News posts about quantum computing...")
 all_posts = []
-for sort_type in ("hot", "top", "new"):
-    all_posts.extend(collect(sort_type, target=100))
+for q in QUERIES:
+    print(f"\n-- '{q}' --")
+    all_posts += collect(q, tags="story", target=75)
+    all_posts += collect(q, tags="comment", target=50)
     time.sleep(1)
 
 # Deduplicate
@@ -75,13 +73,13 @@ for p in all_posts:
         seen_ids.add(p["id"])
         deduped.append(p)
 
-df = pd.DataFrame(deduped)[["text", "label", "score", "url"]]
+df = pd.DataFrame(deduped)[["text", "label", "score", "url", "hn_link"]]
 df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 
-print(f"\nTotal unique posts: {len(df)}")
+print(f"\nTotal unique posts/comments: {len(df)}")
 print(df["text"].str.split().str.len().describe().to_string())
 
 df.to_csv("dataset.csv", index=False)
 print("\nSaved: dataset.csv")
-print("Open it and fill in the 'label' column: hype | technical | discussion")
-print("Aim for ~70 of each. The 'url' column links to the original post.")
+print("Fill in the 'label' column: hype | technical | discussion (~70 each)")
+print("Use 'hn_link' to read the full thread for context.")
