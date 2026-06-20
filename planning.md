@@ -1,73 +1,91 @@
 # Planning — TakeMeter Project 3
 
-## Community
+---
 
-**Hacker News** (news.ycombinator.com) — a tech-focused community where quantum computing posts and comments span a wide quality spectrum: rigorous technical breakdowns sit alongside breathless hype posts and general field discussion. The community's culture of linking claims to evidence makes the hype/technical boundary particularly meaningful to insiders.
+## 1. Community
 
-## Community Description
+**Hacker News** (news.ycombinator.com) — a tech-focused link aggregator and discussion forum used heavily by software engineers, researchers, and startup founders. Quantum computing is a recurring topic there, appearing in the form of news submissions, Ask HN threads, and comment-section debates.
 
-Hacker News is a tech community where quantum computing posts range from serious technical discussion of algorithms and error correction to sensational news headlines about quantum supremacy. The quality distinction that matters here is whether a post engages with the actual technical substance of quantum computing or just reacts to its cultural/financial narrative. HN's culture of demanding citations and calling out overclaiming makes the hype/technical label boundary especially meaningful to insiders.
+**Why Hacker News fits this task:**
+Hacker News is a good fit for discourse classification because its quantum computing content spans a genuinely wide quality spectrum in a single place. At one end: substantive comments that walk through surface code thresholds, explain why qubit count is a misleading metric, or critique a paper's experimental setup. At the other end: breathless "this changes everything" headlines, stock-pump adjacent announcements, and speculative timeline predictions posted with no supporting reasoning. Between those extremes sits a large middle category of community debate — field comparisons, career questions, company roadmap arguments — that is neither purely technical nor purely hype. This three-way variation makes the dataset interesting: a classifier that just learns "does this mention qubits?" won't succeed. The community is also text-heavy by design; even link submissions generate long comment threads, giving rich signal for a language model.
+
+Reddit's r/QuantumComputing was the original choice but was ruled out because Reddit has locked down their API and blocked unauthenticated JSON access. Hacker News's Algolia API is fully open, stable, and returns both story text and comment text — equivalent content for this task.
 
 ---
 
-## Label Definitions
+## 2. Labels
 
-**Label 1 — `hype`**
-Posts that make sensational or speculative claims about quantum computing's capabilities, impact, or timeline without technical grounding. Typically news headlines, stock price discussions, "this changes everything" announcements, or predictions not backed by reasoning.
+Three labels are used: `hype`, `technical`, and `discussion`.
 
-- Example 1: "Quantum computers will break all encryption within 5 years — should we be worried?"
-- Example 2: "IONQ stock is up 40% after their latest qubit announcement 🚀🚀"
-- Borderline: A post sharing a Google research paper titled "Quantum supremacy achieved" with no body text — it's a real paper, but the framing and lack of any technical engagement makes it lean hype.
+**`hype`** — A post that makes claims about quantum computing's capabilities, impact, or timeline without grounding those claims in technical evidence or reasoned argument. Hype posts are typically reactive, announcement-driven, or financially motivated.
 
----
+- Example 1: *"Quantum computers will make all current encryption obsolete within 3 years. Banks and governments are not ready."* — Asserts a specific, dramatic timeline with no supporting reasoning or citation.
+- Example 2: *"IonQ up 60% today after announcing 1000-qubit roadmap. This is the moment quantum goes mainstream."* — Stock price reaction with no engagement with what 1000 logical vs. physical qubits actually means.
 
-**Label 2 — `technical`**
-Posts that engage substantively with quantum computing concepts: explaining algorithms, analyzing research papers, discussing error correction, comparing qubit architectures, or working through implementation details. The post itself contains or invites real technical content.
+**`technical`** — A post that engages substantively with quantum computing concepts: explaining algorithms, analyzing research results, working through error correction theory, comparing qubit architectures, or asking a question that requires domain knowledge to answer. The value of the post is in its technical content, not its opinion.
 
-- Example 1: "Can someone explain why Shor's algorithm requires a fault-tolerant quantum computer? I understand the circuit but not the error threshold requirement."
-- Example 2: "IBM's new error correction paper claims a threshold of 0.1% — here's why that matters for surface codes specifically."
-- Borderline: "What's the difference between gate-based and annealing quantum computers?" — it's a real question but may get one-line answers. Lean technical if the asker shows they've read something; lean discussion if it's purely open-ended.
+- Example 1: *"I've been trying to understand why Shor's algorithm needs fault tolerance. I get the circuit diagram but I'm confused about why the error threshold has to be below ~1% rather than something higher."* — Asks a specific, answerable technical question rooted in prior reading.
+- Example 2: *"IBM's new paper on error correction achieves a 0.1% physical error rate with surface codes. To put that in context: fault-tolerant quantum computing generally needs below 1%, so this is meaningful progress — but the qubit overhead to encode one logical qubit is still around 1000:1."* — Quantitative analysis that explains why a result matters.
 
----
+**`discussion`** — A post that invites community debate or reflection about the field without requiring or delivering technical depth. Discussion posts are substantive opinions, comparisons, or questions about the direction, actors, or culture of quantum computing — but the core value is the exchange of views, not the technical content itself.
 
-**Label 3 — `discussion`**
-Posts that invite community debate or reflection about the quantum computing field without requiring technical depth: comparisons between company roadmaps, career/education advice, field outlook debates, or reactions to news that go beyond the headline into reasoned opinion.
-
-- Example 1: "Is Google or IBM actually ahead in the quantum race right now? IBM has more qubits but Google's error rates seem better."
-- Example 2: "Should I pursue a PhD in quantum computing in 2025? Curious what the job market looks like for people coming out of programs."
-- Borderline: A post debating whether a specific company's qubit count claims are credible — could be hype (if just venting) or discussion (if reasoning through the evidence).
+- Example 1: *"Is Google actually ahead of IBM in the quantum race? IBM ships more qubits but Google seems to focus more on error rates. Curious how people here think about the right metric."* — Frames a genuine debate question and invites reasoned responses.
+- Example 2: *"Thinking about a PhD in quantum computing. Is the academic job market realistic, or should I aim for industry from the start? Would love to hear from people who made that choice."* — Career/field question with no technical content, but invites community knowledge.
 
 ---
 
-## Mutual Exclusivity Check
+## 3. Hard Edge Cases
 
-The main overlap risk is between **hype** and **discussion** — both can be opinionated and non-technical. The boundary: *discussion* posts show reasoning or invite reasoned debate; *hype* posts make claims without justification or are purely reactive (stock pumping, breathless headlines).
+**Edge case 1 — Hype vs. discussion:** A post that makes a strong claim about the field but backs it with some reasoning. Example: *"I think quantum computing will not be useful for optimization problems in the next decade, because variational quantum eigensolvers haven't scaled past toy problems and the hype is driven by VC money, not results."* This has a thesis and evidence, unlike pure hype, but the goal is opinion rather than technical explanation.
 
-The secondary risk is **technical** vs. **discussion** — a post can be both substantive and opinion-based. The boundary: if the post's core value is the technical content or question, it's *technical*; if the core value is community debate, it's *discussion*.
+**Decision rule:** If the post's primary intent is to persuade or debate a position about the field (rather than explain a concept), it is `discussion` even if it uses some technical vocabulary. Hype requires the additional element of being ungrounded — no reasoning shown, just assertion or excitement.
 
-A random post can be assigned to exactly one label in the majority of cases.
+**Edge case 2 — Technical vs. discussion:** A post comparing two companies' approaches that happens to include real numbers. Example: *"Google's Willow chip claims 105 qubits with below-threshold error rates. IBM has more qubits but higher error rates. Does this mean Google is winning?"* It cites real data but the question is ultimately about competitive standing, not technical understanding.
 
----
+**Decision rule:** If the post's primary question is "who is winning" or "what should I think about X," it is `discussion`. If the primary question is "how does X work" or "what does this result mean technically," it is `technical`. When genuinely 50/50, label it `discussion` — it is the safer label for borderline cases because the technical content is present but not the point.
 
-## Dataset Collection
+**Edge case 3 — Short posts:** A single-sentence submission like *"Quantum computers can now factor 2048-bit RSA keys"* could be hype (if false/exaggerated) or a news link to a real result. Without body text, the title alone is the signal.
 
-- **Source:** Hacker News via Algolia HN Search API (hn.algolia.com)
-- **Collection method:** Programmatic scrape using `scrape_reddit.py` — queries: "quantum computing", "qubit", "quantum supremacy", "quantum error correction"
-- **Filtering:** Removed posts/comments under 15 words; stripped HTML tags from comments
-- **Target count:** 210 examples (~70 per label)
-- **Actual count:** 282 scraped; label ~210 and discard remainder
-
-## CSV Format
-
-| column | description |
-|--------|-------------|
-| `text` | Post title + body text concatenated |
-| `label` | One of: `hype`, `technical`, `discussion` |
+**Decision rule:** If the title makes a dramatic capability claim with no qualifier, label it `hype`. If the title accurately describes a verifiable milestone in neutral language, label it `technical`. If still uncertain, check the HN link column to read the comments — community reaction often clarifies whether the post was treated as hype or substance.
 
 ---
 
-## Potential Challenges
+## 4. Data Collection Plan
 
-- **Hype vs. discussion boundary:** A reasonable-sounding prediction can look like either. Rule: if there's no reasoning shown, it's hype.
-- **Short posts:** Titles alone may not have enough signal — always include body text where available.
-- **Technical questions from beginners:** These belong in `technical` even if superficial, because the intent is to engage with substance.
+**Source:** Hacker News via the Algolia HN Search API (`hn.algolia.com/api/v1/search`). No credentials required. The scraper (`scrape_reddit.py`) queries four terms — *quantum computing*, *qubit*, *quantum supremacy*, *quantum error correction* — across both story and comment types, deduplicates by post ID, and outputs `dataset.csv` with a `text` column (title + body) and a blank `label` column.
+
+**Volume:** 282 posts and comments were scraped. Target is to label 210 examples (~70 per label). The remaining ~72 serve as a reserve in case any label falls short.
+
+**Per-label targets:** 70 `hype`, 70 `technical`, 70 `discussion`. Balanced classes simplify training and make accuracy a more meaningful metric. If a label falls below 60 after going through all 282 examples, the scraper will be re-run with additional queries (e.g., *"quantum startup"* for more hype, *"quantum algorithm"* for more technical) to top it up.
+
+**If a label is underrepresented:** The most likely shortage is `hype` — Hacker News skews toward technically literate posters who call out overclaiming rather than produce it. If `hype` falls short, the query will be broadened to include terms like *"quantum breakthrough"* and *"quantum stock"* which attract more sensational framing.
+
+**Annotation process:** Each row in `dataset.csv` will be labeled using the `hn_link` column to open the original post when the text alone is unclear. The three-class decision rules in Section 3 will be applied in order. If a post cannot be confidently assigned after reading the full thread, it will be discarded rather than guessed.
+
+---
+
+## 5. Evaluation Metrics
+
+**Accuracy** will be reported because it is required by the notebook and easy to interpret: percentage of test-set examples correctly classified.
+
+**Per-class precision, recall, and F1** are also required for this task. Accuracy alone is insufficient here for two reasons:
+
+1. **Class imbalance is possible.** Even with a target of 70 per label, the final test distribution may not be perfectly balanced. A model that predicts `technical` for every post could achieve high accuracy if that class dominates — per-class metrics expose this.
+
+2. **The cost of errors differs by class.** Mislabeling `hype` as `technical` is a worse error than mislabeling `discussion` as `technical`, because a community tool that surfaces hype as credible technical content is actively harmful. F1 per class lets us check whether the model is specifically weak on the hype/technical boundary, which is the most consequential one.
+
+**Macro F1** (unweighted average of per-class F1) will be used as the primary single-number summary metric. Macro F1 treats all classes equally regardless of size, which is appropriate here because no label is inherently more important than another — they all need to work.
+
+**Confusion matrix** will be examined to identify which specific label pairs the model confuses most. The expected hard pairs are `hype`↔`discussion` and `technical`↔`discussion`. If the confusion matrix shows the model is mostly wrong on those two pairs, that is interpretable and expected. If it is confusing `hype` and `technical` at high rates, the label boundary may need rethinking.
+
+---
+
+## 6. Definition of Success
+
+**Minimum bar for this project:** Macro F1 ≥ 0.70 on the test set. This means the fine-tuned DistilBERT model correctly classifies at least 70% of each label on average, which is meaningfully above random chance (0.33) and above a baseline that just predicts the majority class (~0.33 macro F1 on balanced data).
+
+**Bar for genuine usefulness:** Macro F1 ≥ 0.80, with no single class below F1 = 0.70. At this level, the classifier would be trustworthy enough to use as a first-pass filter in a community tool — surfacing likely-technical posts for a curator, or flagging likely-hype posts for review — with a human in the loop for borderline cases.
+
+**Why this threshold:** A macro F1 of 0.80 means the model is wrong roughly 1 in 5 times, evenly across classes. For a triage or surfacing tool (not a gatekeeping tool), that error rate is acceptable because the cost of a false positive or false negative is low — a mislabeled post gets surfaced or filtered incorrectly, but no permanent harm is done. A gatekeeping tool (e.g., one that auto-removes hype posts) would require higher precision on the `hype` class specifically (≥ 0.90) before deployment.
+
+**Comparison to baseline:** The zero-shot Groq baseline will be run on the same test set. If fine-tuning does not improve over the baseline by at least 5 percentage points in macro F1, that is a meaningful finding worth explaining — it would suggest the label boundaries are either too vague for a small fine-tuned model to learn, or that the 200-example dataset is too small to give DistilBERT an edge over a 70B-parameter zero-shot model.
