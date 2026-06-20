@@ -1,65 +1,71 @@
 """
 Scrape r/QuantumComputing posts and save to dataset.csv.
-No API credentials required — uses Reddit's public JSON endpoint.
-
-Run in Google Colab or locally with Python 3.
+Requires Reddit API credentials (free):
+  1. Go to reddit.com/prefs/apps -> create app -> type: script
+  2. Add REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET to Colab Secrets
 """
 
-import requests
+import subprocess
+subprocess.run(["pip", "install", "-q", "praw"], check=True)
+
+import praw
 import pandas as pd
 import time
+from google.colab import userdata
+
+REDDIT_CLIENT_ID     = userdata.get("REDDIT_CLIENT_ID")
+REDDIT_CLIENT_SECRET = userdata.get("REDDIT_CLIENT_SECRET")
+
+assert REDDIT_CLIENT_ID,     "Add REDDIT_CLIENT_ID to Colab Secrets"
+assert REDDIT_CLIENT_SECRET, "Add REDDIT_CLIENT_SECRET to Colab Secrets"
+
+reddit = praw.Reddit(
+    client_id=REDDIT_CLIENT_ID,
+    client_secret=REDDIT_CLIENT_SECRET,
+    user_agent="ai201-takemeter-scraper/1.0",
+)
 
 SUBREDDIT = "QuantumComputing"
-HEADERS = {"User-Agent": "ai201-takemeter-scraper/1.0"}
 MIN_WORDS = 15
 
 
-def fetch_posts(sort: str, after: str = None) -> tuple[list, str | None]:
-    url = f"https://www.reddit.com/r/{SUBREDDIT}/{sort}.json"
-    params = {"limit": 100, "raw_json": 1}
-    if after:
-        params["after"] = after
-    resp = requests.get(url, headers=HEADERS, params=params, timeout=10)
-    resp.raise_for_status()
-    data = resp.json()
-    return data["data"]["children"], data["data"].get("after")
-
-
 def collect(sort: str, target: int = 100) -> list[dict]:
-    posts, after, seen = [], None, set()
-    while len(posts) < target:
-        children, after = fetch_posts(sort, after=after)
-        if not children:
+    sub = reddit.subreddit(SUBREDDIT)
+    if sort == "hot":
+        gen = sub.hot(limit=target * 2)
+    elif sort == "top":
+        gen = sub.top(limit=target * 2, time_filter="year")
+    else:
+        gen = sub.new(limit=target * 2)
+
+    posts, seen = [], set()
+    for submission in gen:
+        if len(posts) >= target:
             break
-        for child in children:
-            p = child["data"]
-            if p["id"] in seen:
-                continue
-            seen.add(p["id"])
-            body = p.get("selftext", "").strip()
-            body = "" if body in ("[removed]", "[deleted]") else body
-            text = (p["title"] + " " + body).strip()
-            if len(text.split()) < MIN_WORDS:
-                continue
-            posts.append({
-                "id": p["id"],
-                "text": text,
-                "label": "",
-                "score": p.get("score", 0),
-                "url": "https://reddit.com" + p.get("permalink", ""),
-            })
-        print(f"  [{sort}] {len(posts)} posts so far...")
-        if not after:
-            break
-        time.sleep(1)
-    return posts[:target]
+        if submission.id in seen:
+            continue
+        seen.add(submission.id)
+        body = submission.selftext.strip()
+        body = "" if body in ("[removed]", "[deleted]") else body
+        text = (submission.title + " " + body).strip()
+        if len(text.split()) < MIN_WORDS:
+            continue
+        posts.append({
+            "id": submission.id,
+            "text": text,
+            "label": "",
+            "score": submission.score,
+            "url": "https://reddit.com" + submission.permalink,
+        })
+    print(f"  [{sort}] collected {len(posts)} posts")
+    return posts
 
 
 print("Fetching posts from r/QuantumComputing...")
 all_posts = []
 for sort_type in ("hot", "top", "new"):
     all_posts.extend(collect(sort_type, target=100))
-    time.sleep(2)
+    time.sleep(1)
 
 # Deduplicate
 seen_ids = set()
@@ -72,11 +78,10 @@ for p in all_posts:
 df = pd.DataFrame(deduped)[["text", "label", "score", "url"]]
 df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 
-print(f"\nTotal unique posts collected: {len(df)}")
+print(f"\nTotal unique posts: {len(df)}")
 print(df["text"].str.split().str.len().describe().to_string())
 
 df.to_csv("dataset.csv", index=False)
 print("\nSaved: dataset.csv")
-print("Next step: open the CSV and fill in the 'label' column.")
-print("Use labels: hype | technical | discussion")
-print("Aim for ~70 of each. The 'url' column links back to the original post.")
+print("Open it and fill in the 'label' column: hype | technical | discussion")
+print("Aim for ~70 of each. The 'url' column links to the original post.")
