@@ -82,10 +82,82 @@ Three labels are used: `hype`, `technical`, and `discussion`.
 
 ## 6. Definition of Success
 
-**Minimum bar for this project:** Macro F1 ≥ 0.70 on the test set. This means the fine-tuned DistilBERT model correctly classifies at least 70% of each label on average, which is meaningfully above random chance (0.33) and above a baseline that just predicts the majority class (~0.33 macro F1 on balanced data).
+Success is defined by two objectively checkable criteria evaluated against `evaluation_results.json` after training:
 
-**Bar for genuine usefulness:** Macro F1 ≥ 0.80, with no single class below F1 = 0.70. At this level, the classifier would be trustworthy enough to use as a first-pass filter in a community tool — surfacing likely-technical posts for a curator, or flagging likely-hype posts for review — with a human in the loop for borderline cases.
+**Pass criterion (project requirement met):**
+- Fine-tuned DistilBERT macro F1 ≥ 0.72 on the held-out test set
+- No individual class F1 below 0.60
 
-**Why this threshold:** A macro F1 of 0.80 means the model is wrong roughly 1 in 5 times, evenly across classes. For a triage or surfacing tool (not a gatekeeping tool), that error rate is acceptable because the cost of a false positive or false negative is low — a mislabeled post gets surfaced or filtered incorrectly, but no permanent harm is done. A gatekeeping tool (e.g., one that auto-removes hype posts) would require higher precision on the `hype` class specifically (≥ 0.90) before deployment.
+Both conditions must hold. A macro F1 of 0.72 with one class at 0.45 does not pass. These numbers will be read directly from the classification report printed by the notebook in Section 4 — there is no interpretation required, just comparison to the thresholds above.
 
-**Comparison to baseline:** The zero-shot Groq baseline will be run on the same test set. If fine-tuning does not improve over the baseline by at least 5 percentage points in macro F1, that is a meaningful finding worth explaining — it would suggest the label boundaries are either too vague for a small fine-tuned model to learn, or that the 200-example dataset is too small to give DistilBERT an edge over a 70B-parameter zero-shot model.
+**Deployment bar (classifier is genuinely useful):**
+- Fine-tuned DistilBERT macro F1 ≥ 0.80
+- No individual class F1 below 0.70
+
+At this level the classifier is trustworthy as a first-pass triage tool — surfacing likely-technical posts for a curator or flagging likely-hype for review — with a human in the loop. This is not the project pass/fail; it is the bar that would justify integrating the model into a real community tool.
+
+**Baseline comparison (secondary finding):**
+Fine-tuning is expected to outperform the zero-shot Groq baseline. If the improvement is less than 5 percentage points in macro F1, that is a finding worth explaining in the evaluation report — it would suggest either that the label boundaries are too vague to learn from 200 examples, or that a 70B zero-shot model has a genuine advantage on this task. This comparison does not affect pass/fail; it is an analytical question regardless of outcome.
+
+**Why these thresholds:** Macro F1 = 0.72 is meaningfully above both random chance (0.33) and a majority-class baseline (~0.33 on balanced data). It means the model is correct roughly 72% of the time across all classes equally — acceptable for a triage tool where errors are reviewed, not acted on automatically. The floor of 0.60 per class prevents a degenerate model that collapses one label into another from passing.
+
+---
+
+## 7. AI Tool Plan
+
+### 7a. Label Stress-Testing (done before annotation)
+
+Ten boundary posts were generated to stress-test the label definitions. Each is placed at a seam between two labels. The decision and reasoning are recorded — if a post cannot be cleanly decided, the label definition needs tightening before annotating 200 examples.
+
+**`hype` ↔ `discussion` boundary:**
+
+| # | Post | Decision | Reasoning |
+|---|------|----------|-----------|
+| 1 | "I genuinely think we're 10 years from quantum advantage in drug discovery. The error correction improvements in the last 2 years alone have moved faster than anyone predicted in 2020." | `discussion` | Has a timeline (hype signal) but the claim is grounded in a cited trend. The post invites debate rather than asserting finality. |
+| 2 | "Google's Willow results are being massively oversold. Yes, 105 qubits with below-threshold error rates is real progress, but 'solving problems classical computers can't' applies to a narrow sampling task no one cares about practically." | `discussion` | Critical reaction with technical vocabulary, but the purpose is skeptical opinion, not explanation. Reasoning is visible. |
+| 3 | "Quantum computing is going to be bigger than the internet. The companies positioning themselves now will dominate computing for the next 50 years." | `hype` | Grand timeline, no evidence, no mechanism. Nothing to debate — just assertion. |
+| 4 | "I don't think quantum advantage for real-world problems arrives before 2040. The overhead of fault tolerance makes current hardware essentially useless outside artificial benchmarks." | `discussion` | Timeline prediction, but supported by a stated reason (fault tolerance overhead). The reasoning is present even if not fully explained. |
+| 5 | "Everyone is underestimating how fast qubit quality is improving. Look at the progress curves — this is going to move faster than people think." | `hype` | Gestures at evidence ("progress curves") without providing any. The reasoning is absent; the confidence is not. |
+
+**`technical` ↔ `discussion` boundary:**
+
+| # | Post | Decision | Reasoning |
+|---|------|----------|-----------|
+| 6 | "Comparing trapped ion vs. superconducting qubits for my thesis. Trapped ion has coherence times on the order of seconds vs. microseconds for superconducting, but gate speeds are ~1000x slower. Which architecture will scale better long-term?" | `technical` | The post's value is in the quantitative framing. The closing question invites opinion but the substance is technical. |
+| 7 | "Why does Shor's algorithm break RSA but not elliptic curve cryptography? I've read the Wikipedia article but I'm unclear on the difference in the hardness assumptions." | `technical` | Clear technical question, beginner-level but genuine. Unambiguous. |
+| 8 | "IBM has 1000+ qubits but Google has better error rates at 105. How should we think about the right metric for measuring quantum progress? Is qubit count a red herring?" | `discussion` | Technical vocabulary used as framing for a conceptual debate about measurement. The question is about the field, not the technology. |
+| 9 | "Surface codes require roughly 1000 physical qubits per logical qubit at current error rates. That means millions of physical qubits for useful fault-tolerant computation. Is there a realistic path to getting there in 20 years?" | `discussion` | Opens with a technical fact then pivots to a field-outlook question. The closing question makes the purpose `discussion`. |
+| 10 | "Can someone explain the difference between NISQ algorithms and fault-tolerant algorithms? I keep seeing both terms and I'm not sure whether current hardware is capable of either." | `technical` | Genuine technical question from someone who has read enough to know the vocabulary. Clear. |
+
+**Result of stress-test:** No definition changes needed. The decision rules from Section 3 resolved every case without ambiguity — including the two hardest (posts 4 and 6). The key boundary sharpened by this exercise: `discussion` requires that *the primary purpose of the post is debate or opinion*, even if technical content is present. A post that leads with numbers but asks "which will win" is still `technical` if the numbers carry the weight; it is `discussion` if the closing question carries the weight.
+
+---
+
+### 7b. Annotation Assistance
+
+**Decision: yes, use Claude (claude.ai) to pre-label a batch of examples before human review.**
+
+Process:
+1. Copy batches of ~30 rows from `dataset.csv` into Claude with the label definitions from Section 2 and the decision rules from Section 3.
+2. Ask Claude to assign one of `hype`, `technical`, `discussion` to each row and briefly state its reason.
+3. Review every pre-label — accept, reject, or correct — before writing the final label to the CSV.
+4. Add a `pre_labeled` column to the CSV: `1` if Claude's suggestion was the starting point, `0` if labeled from scratch.
+
+**Why:** Pre-labeling speeds up annotation for clear cases and forces engagement with the hard cases — it is easier to disagree with a suggested label than to form one from nothing. All labels are human-verified before use.
+
+**Disclosure:** The `pre_labeled` column provides an audit trail. The AI usage section of the README will note that Claude was used for pre-labeling assistance and that every label was human-reviewed.
+
+---
+
+### 7c. Failure Analysis
+
+After training, the notebook prints up to 15 wrong predictions with the true label, predicted label, and confidence score. These will be given to Claude with the following prompt structure:
+
+> "Here are [N] misclassified examples from a 3-class text classifier (hype / technical / discussion) trained on Hacker News quantum computing posts. For each, the true label and predicted label are shown. Identify any patterns — are there systematic confusions between specific label pairs? Are there linguistic features (sentence structure, vocabulary, hedging language) that appear repeatedly in misclassified posts? Do the errors cluster by post type (e.g., short posts, news links, beginner questions)?"
+
+**What to look for:**
+- Confusion pair frequency: are most errors `hype`→`discussion` or `technical`→`discussion`? A lopsided pattern points to a specific boundary problem.
+- Length effect: are short posts (< 30 words) disproportionately wrong? This would indicate the model needs more signal than a title alone provides.
+- Vocabulary leakage: does the presence of technical vocabulary (qubit, algorithm, error rate) cause `hype` posts to be mislabeled as `technical`? This would mean the model learned surface vocabulary rather than discourse structure.
+
+**Verification step:** For any pattern Claude identifies, manually count its frequency in the error list before including it in the evaluation report. Do not report a pattern if it appears in fewer than 3 of the wrong predictions — that is noise, not a finding.
