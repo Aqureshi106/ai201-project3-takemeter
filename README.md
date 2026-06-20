@@ -15,10 +15,10 @@ ai201-project3-takemeter/
 
 ## Dataset
 
-- **Community:** <!-- e.g. r/nba, r/personalfinance -->
-- **Labels:** <!-- e.g. analysis, hot_take, reaction -->
+- **Community:** r/QuantumComputing
+- **Labels:** `hype`, `technical`, `discussion`
 - **Total examples:** <!-- e.g. 210 -->
-- **Label distribution:** <!-- e.g. analysis: 80, hot_take: 70, reaction: 60 -->
+- **Label distribution:** <!-- e.g. hype: 70, technical: 70, discussion: 70 -->
 
 ## Models
 
