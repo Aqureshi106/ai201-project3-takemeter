@@ -2,6 +2,10 @@
 
 Fine-tuning a DistilBERT text classifier on labeled Hacker News quantum computing posts and comparing it to a zero-shot Groq baseline.
 
+## Demo
+
+[Watch the demo video](https://www.loom.com/share/16674efaac8f413884eb8ea2e0b999d7)
+
 ---
 
 ## Community
