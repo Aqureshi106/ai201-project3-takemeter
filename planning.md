@@ -50,9 +50,48 @@ Three labels are used: `hype`, `technical`, and `discussion`.
 
 ---
 
+## 3b. Difficult Labeling Cases from the Dataset
+
+These are three posts that required genuine deliberation during annotation. Each is recorded with the competing labels considered and what resolved the call.
+
+---
+
+**Difficult case 1 — Deep technical content, discussion-framed question**
+
+> *"If I take the Willow announcement at face value (in particular, the QEC claims), should I update my priors? In particular, how much further progress would need to be made for you to abandon your previously-stated skepticism about the general ability of QEC to continue to scale exponentially?"*
+> — HN #42387302, a Google employee writing to a known QEC skeptic
+
+**Competing labels:** `technical` — the post engages with QEC thresholds, below-threshold error rates, store-now/decrypt-later threat models, and cites specific papers at length. `discussion` — the post's closing purpose is explicitly "should I update my priors?" and "how much further progress would change your position?"
+
+**What decided it:** Planning.md edge-case rule 2: *"If the primary question is 'what should I think about X,' it is discussion."* The technical vocabulary is present as scaffolding, but the commenter is not explaining or analyzing — they are asking an expert to help them form an opinion. The value of the post is the exchange of views. → **`discussion`**
+
+---
+
+**Difficult case 2 — "Milestone" language on a legitimate historical result**
+
+> *"Quantum Milestones, 1964: John Stewart Bell Rings in New Era of Quantum Theory (2022)"*
+> — HN #43319875, linking to a Physics APS article about Bell's 1964 theorem
+
+**Competing labels:** `hype` — the title contains "Quantum Milestones," a keyword pattern that co-occurs reliably with sensational QC announcements in this dataset. `discussion` — Bell's theorem is a foundational scientific result from 1964; the "milestone" is historical fact, not a forward-looking capability claim.
+
+**What decided it:** The hype definition requires *ungrounded claims about capabilities or timelines*. Bell's theorem is empirically verified and over 60 years old. Calling it a milestone is accurate description, not sensationalism. The scraper surface-matched the keyword; reading the post removed the ambiguity. → **`discussion`**
+
+---
+
+**Difficult case 3 — Expert explaining a hyped result**
+
+> *"Why Google's Quantum Supremacy Milestone Matters — By Scott Aaronson"* (NYT op-ed)
+> — HN #21417173
+
+**Competing labels:** `hype` — written directly in response to Google's supremacy claim, uses "milestone" in the title, and was heavily upvoted during the peak hype cycle around that announcement. `discussion` — Scott Aaronson (the leading academic voice on QC complexity) wrote the piece to *contextualize and qualify* the result: it matters scientifically, but does not mean encryption is broken, does not mean general-purpose QC is near.
+
+**What decided it:** Hype requires the *absence* of reasoning — assertion or excitement without grounding. This piece provides exactly the grounding that hype lacks: it names what the result proves, names what it does not prove, and explains why the distinction matters. An expert's reasoned opinion about significance is `discussion`, even when the subject is an announcement. → **`discussion`**
+
+---
+
 ## 4. Data Collection Plan
 
-**Source:** Hacker News via the Algolia HN Search API (`hn.algolia.com/api/v1/search`). No credentials required. The scraper (`scrape_reddit.py`) queries four terms — *quantum computing*, *qubit*, *quantum supremacy*, *quantum error correction* — across both story and comment types, deduplicates by post ID, and outputs `dataset.csv` with a `text` column (title + body) and a blank `label` column.
+**Source:** Hacker News via the Algolia HN Search API (`hn.algolia.com/api/v1/search`). No credentials required. The scraper (`scrape_hn.py`) queries four terms — *quantum computing*, *qubit*, *quantum supremacy*, *quantum error correction* — across both story and comment types, deduplicates by post ID, and outputs `dataset.csv` with a `text` column (title + body) and a blank `label` column.
 
 **Volume:** 282 posts and comments were scraped. Target is to label 210 examples (~70 per label). The remaining ~72 serve as a reserve in case any label falls short.
 

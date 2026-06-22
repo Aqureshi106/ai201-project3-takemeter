@@ -1,0 +1,183 @@
+{
+  "comparison": "human_final vs claude_prelabel",
+  "n_examples": 208,
+  "percent_agreement": 90.4,
+  "cohens_kappa": 0.856,
+  "agreements": 188,
+  "corrections": 20,
+  "correction_analysis": {
+    "count": 20,
+    "pair_counts": {
+      "hype \u2192 discussion": 17,
+      "hype \u2192 technical": 1,
+      "technical \u2192 discussion": 2
+    },
+    "boundary_counts": {
+      "discussion \u2194 hype": 17,
+      "discussion \u2194 technical": 2,
+      "hype \u2194 technical": 1
+    },
+    "examples": [
+      {
+        "id": "955094",
+        "hn_link": "https://news.ycombinator.com/item?id=955094",
+        "text_preview": "you were right to leave it out - quantum cryptography and quantum computing have only the quantum in common. (i've publi\u2026",
+        "ai_label": "hype",
+        "human_label": "discussion",
+        "notes": "One-sentence opinion distinguishing QKD from QC. No explanation, no technical depth. Value is the assertion."
+      },
+      {
+        "id": "45395121",
+        "hn_link": "https://news.ycombinator.com/item?id=45395121",
+        "text_preview": "HSBC publishes yet another claim of quantum advantage that isn't",
+        "ai_label": "hype",
+        "human_label": "discussion",
+        "notes": "Scott Aaronson criticising an HSBC claim: 'yet another claim of quantum advantage that isn't.' Calling out hype."
+      },
+      {
+        "id": "21418141",
+        "hn_link": "https://news.ycombinator.com/item?id=21418141",
+        "text_preview": "Quantum advantage, or a practical demonstration that quantum computers work",
+        "ai_label": "hype",
+        "human_label": "discussion",
+        "notes": "Blog post title/excerpt: 'Quantum advantage, or a practical demonstration that quantum computers work.' Explanatory framing, not hype."
+      },
+      {
+        "id": "28707863",
+        "hn_link": "https://news.ycombinator.com/item?id=28707863",
+        "text_preview": "Just so nobody is misinterpreting what you\u2019re saying (that somehow the quantum supremacy result was a farce): Quantum su\u2026",
+        "ai_label": "hype",
+        "human_label": "discussion",
+        "notes": "Explaining what quantum supremacy actually means and defending the result with reasoning. Not hype."
+      },
+      {
+        "id": "43319875",
+        "hn_link": "https://news.ycombinator.com/item?id=43319875",
+        "text_preview": "Quantum Milestones, 1964: John Stewart Bell Rings in New Era of Quantum Theory (2022)",
+        "ai_label": "hype",
+        "human_label": "discussion",
+        "notes": "Historical article about Bell's 1964 theorem \u2014 a genuine foundational result. Not a capability claim."
+      },
+      {
+        "id": "44106327",
+        "hn_link": "https://news.ycombinator.com/item?id=44106327",
+        "text_preview": "Presenting a quantum breakthrough could be cheaper than cornering noticeable capacity.",
+        "ai_label": "hype",
+        "human_label": "discussion",
+        "notes": "Cryptic observation about strategic incentives around announcing breakthroughs. Commentary, not a claim."
+      },
+      {
+        "id": "44039709",
+        "hn_link": "https://news.ycombinator.com/item?id=44039709",
+        "text_preview": "I\u2019m not saying they\u2019re phoney - just we need to take this stuff with a big pinch of salt. The Microsoft paper around the\u2026",
+        "ai_label": "hype",
+        "human_label": "discussion",
+        "notes": "Explicitly skeptical: 'take this stuff with a big pinch of salt.' Criticising hype, not producing it."
+      },
+      {
+        "id": "24287559",
+        "hn_link": "https://news.ycombinator.com/item?id=24287559",
+        "text_preview": "White House announces $1B investment for AI and quantum computing hubs",
+        "ai_label": "hype",
+        "human_label": "discussion",
+        "notes": "Factual news: government investment announcement. No capability claim about QC."
+      },
+      {
+        "id": "35912659",
+        "hn_link": "https://news.ycombinator.com/item?id=35912659",
+        "text_preview": "Ask HN: Quantum Computing Textbook Focus on Physics/Chemistry Side So many textbooks out there talk about Simon&#x27;s o\u2026",
+        "ai_label": "technical",
+        "human_label": "discussion",
+        "notes": "Asking for textbook/course recommendations (Trotter decomp, stabilizer, etc.). Resource request = discussion."
+      },
+      {
+        "id": "36034283",
+        "hn_link": "https://news.ycombinator.com/item?id=36034283",
+        "text_preview": "I don&#x27;t think it is.  I think if someone says they have a computer, it needs to be a computer, not a very large sli\u2026",
+        "ai_label": "hype",
+        "human_label": "discussion",
+        "notes": "Skeptical commentary: 'a non-quantum computer is never a breakthrough in quantum computers.' Discussion."
+      },
+      {
+        "id": "21417173",
+        "hn_link": "https://news.ycombinator.com/item?id=21417173",
+        "text_preview": "Why Google\u2019s Quantum Supremacy Milestone Matters - By Scott Aaronson",
+        "ai_label": "hype",
+        "human_label": "discussion",
+        "notes": "Scott Aaronson op-ed EXPLAINING why the milestone matters, with reasoning. Not ungrounded."
+      },
+      {
+        "id": "35741964",
+        "hn_link": "https://news.ycombinator.com/item?id=35741964",
+        "text_preview": "Wild to see a practical application of quantum entanglement hit the milestone of both miniaturization and performance en\u2026",
+        "ai_label": "hype",
+        "human_label": "discussion",
+        "notes": "Brief excited reaction to a result ('Wild to see'). No technical content or capability claim."
+      },
+      {
+        "id": "46292467",
+        "hn_link": "https://news.ycombinator.com/item?id=46292467",
+        "text_preview": "Neura Link, Quantum computers are making interesting milestones with Microsoft releasing a processor chip for Quantum co\u2026",
+        "ai_label": "hype",
+        "human_label": "discussion",
+        "notes": "Briefly listing tech developments (Neuralink, QC, green steel). Conversational, no capability claim."
+      },
+      {
+        "id": "46724609",
+        "hn_link": "https://news.ycombinator.com/item?id=46724609",
+        "text_preview": "New analysis shows that a widely-publicized quantum computing \u201cbreakthrough\u201d doesn\u2019t replicate under closer scrutiny.\nRe\u2026",
+        "ai_label": "hype",
+        "human_label": "discussion",
+        "notes": "Reports that a 'breakthrough' claim did NOT replicate. Opposite of hype \u2014 calling it out."
+      },
+      {
+        "id": "44622144",
+        "hn_link": "https://news.ycombinator.com/item?id=44622144",
+        "text_preview": "It&#x27;s a good point - IMO is about performance under some specific resource constraints, and those constraints don&#x\u2026",
+        "ai_label": "hype",
+        "human_label": "discussion",
+        "notes": "Comparing AI to QC milestones. Primary topic is AI benchmarks, not a QC capability claim."
+      },
+      {
+        "id": "32195692",
+        "hn_link": "https://news.ycombinator.com/item?id=32195692",
+        "text_preview": "&quot;Information stored in the phase is far more protected against errors than with alternative setups currently used i\u2026",
+        "ai_label": "hype",
+        "human_label": "technical",
+        "notes": "Quoting a paper result about phase-based qubit storage and error protection. Specific technical claim from research."
+      },
+      {
+        "id": "45670953",
+        "hn_link": "https://news.ycombinator.com/item?id=45670953",
+        "text_preview": "&gt; Quantum computing-enhanced NMR could become a powerful tool in drug discovery, helping determine how potential medi\u2026",
+        "ai_label": "technical",
+        "human_label": "discussion",
+        "notes": "Commenter asking for timeline estimates on drug-discovery applications. Community debate, not a claim."
+      },
+      {
+        "id": "10032094",
+        "hn_link": "https://news.ycombinator.com/item?id=10032094",
+        "text_preview": "I think there are a few more areas that need to be figured out before the &quot;big bang&quot; of quantum, things like H\u2026",
+        "ai_label": "hype",
+        "human_label": "discussion",
+        "notes": "Skeptical field assessment: 'a few more areas need to be figured out before the big bang of quantum.' Opinion."
+      },
+      {
+        "id": "43297194",
+        "hn_link": "https://news.ycombinator.com/item?id=43297194",
+        "text_preview": "It&#x27;s interesting to note that Bell Labs started doing its most famous work around the same time quantum electrodyna\u2026",
+        "ai_label": "hype",
+        "human_label": "discussion",
+        "notes": "Historical parallel (Bell Labs era vs today). QC mentioned incidentally. No capability claim."
+      },
+      {
+        "id": "47679496",
+        "hn_link": "https://news.ycombinator.com/item?id=47679496",
+        "text_preview": "&gt;  one or more teams of researchers in the field going dark  If the intelligence community is going to nab the first \u2026",
+        "ai_label": "hype",
+        "human_label": "discussion",
+        "notes": "Discussion question about who benefits from a future QC breakthrough. Speculative but debate-framed."
+      }
+    ]
+  }
+}
