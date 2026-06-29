@@ -9,11 +9,45 @@ from pathlib import Path
 LABEL_AGREEMENT_PATH = Path(__file__).parent / "label_agreement.csv"
 RESULTS_PATH = Path(__file__).parent / "label_agreement_results.json"
 LABELS = ("discussion", "technical", "hype")
+REQUIRED_COLUMNS = ("ai_label", "human_label")
+
+
+def validate_columns(fieldnames: list[str] | None, path: Path) -> None:
+    found = set(fieldnames or [])
+    missing = [column for column in REQUIRED_COLUMNS if column not in found]
+    if missing:
+        raise ValueError(
+            f"{path.name} is missing required column(s): {', '.join(missing)}"
+        )
+
+
+def validate_label_values(rows: list[dict], path: Path) -> None:
+    invalid = []
+    for row_number, row in enumerate(rows, start=2):
+        for column in REQUIRED_COLUMNS:
+            label = row[column]
+            if label not in LABELS:
+                invalid.append((row_number, column, label or "<blank>"))
+
+    if invalid:
+        preview = "; ".join(
+            f"row {row_number} {column}={label!r}"
+            for row_number, column, label in invalid[:5]
+        )
+        if len(invalid) > 5:
+            preview += f"; ... {len(invalid) - 5} more"
+        raise ValueError(
+            f"{path.name} contains invalid labels. Expected one of "
+            f"{', '.join(LABELS)}. Found: {preview}"
+        )
 
 
 def load_rows(path: Path) -> list[dict]:
     with path.open(newline="", encoding="utf-8") as f:
-        rows = list(csv.DictReader(f))
+        reader = csv.DictReader(f)
+        validate_columns(reader.fieldnames, path)
+        rows = list(reader)
+    validate_label_values(rows, path)
     if len(rows) < 30:
         raise ValueError(f"Need 30+ labeled examples, found {len(rows)}")
     return rows

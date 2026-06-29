@@ -16,7 +16,7 @@ Hacker News is a good fit for discourse classification because its quantum compu
 
 This three-way variation makes the classification task non-trivial: a vocabulary-matching approach won't succeed because the same terms ("quantum supremacy," "breakthrough," "milestone") appear in all three labels. The meaningful signal is *how* the post uses those terms — whether it asserts, explains, or debates.
 
-Data was collected via the Hacker News Algolia Search API (`hn.algolia.com/api/v1/search`), which is fully open and requires no authentication. The scraper (`scrape_reddit.py`) queries terms across story and comment types and deduplicates by post ID.
+Data was collected via the Hacker News Algolia Search API (`hn.algolia.com/api/v1/search`), which is fully open and requires no authentication. The scraper (`scrape_hn.py`) queries terms across story and comment types and deduplicates by post ID.
 
 ---
 
@@ -79,6 +79,8 @@ python label_agreement.py
 ```
 
 **Scope note:** This measures human–AI agreement, not inter-annotator reliability between two people. It is included because the full annotation pass (208 examples, well above the 30-example minimum) provides an auditable reliability check on the labeling process — and the correction patterns directly motivated the edge-case rules in `planning.md`.
+
+**Stretch-goal status:** Not met unless a second independent human annotator labels a shared sample.
 
 ### Agreement Metrics
 
@@ -396,61 +398,29 @@ for lo, hi in [(0.33, 0.50), (0.50, 0.70), (0.70, 1.01)]:
 
 A Gradio interface is included in `gradio_demo.py`. It accepts a post as free text, runs it through the fine-tuned model, and returns the predicted label, confidence score, and a score breakdown for all three classes.
 
+`gradio_demo.py` reads `TAKEMETER_MODEL_PATH` if it is set. If not, it checks these common training/export locations: `./finetuned_model`, `./takemeter-model/checkpoint-30`, `/content/takemeter-model/checkpoint-30`, `/content/takemeter-model`, and `/content/finetuned_model`.
+
 **To run in Colab** (after training, in a new cell):
 
 ```python
-!pip install -q gradio
-import gradio as gr
-import os, torch
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-
-for _p in ["/content/takemeter-model/checkpoint-30", "/content/takemeter-model", "/content/finetuned_model"]:
-    if os.path.isdir(_p):
-        MODEL_PATH = _p
-        break
-else:
-    raise FileNotFoundError("Model not found. Run !ls /content/ to check the saved path.")
-
-print("Loading from:", MODEL_PATH)
-ID2LABEL = {0: "discussion", 1: "technical", 2: "hype"}
-_tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
-_model = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH)
-_model.eval()
-
-def classify_post(text):
-    if not text.strip():
-        return "Enter a post above."
-    inputs = _tokenizer(text[:512], return_tensors="pt", truncation=True)
-    with torch.no_grad():
-        probs = torch.softmax(_model(**inputs).logits, dim=-1)[0]
-    scores = {ID2LABEL[i]: probs[i].item() for i in range(3)}
-    predicted = max(scores, key=scores.get)
-    lines = [f"Predicted:  {predicted}", f"Confidence: {scores[predicted]:.3f}", "", "All scores:"]
-    for label in ("discussion", "technical", "hype"):
-        bar = "█" * int(scores[label] * 30)
-        lines.append(f"  {label:12s} {scores[label]:.3f}  {bar}")
-    return "\n".join(lines)
-
-demo = gr.Interface(
-    fn=classify_post,
-    inputs=gr.Textbox(lines=6, placeholder="Paste a Hacker News QC post here…", label="Post text"),
-    outputs=gr.Textbox(label="Result", lines=10),
-    title="TakeMeter — QC Post Classifier",
-    description="Fine-tuned DistilBERT · labels: hype · technical · discussion",
-    flagging_mode="never",
-    examples=[
-        "Google's new quantum chip solves in minutes what would take classical computers 10,000 years. This changes everything.",
-        "The surface code threshold theorem: below ~1% physical error rate, each concatenation layer exponentially suppresses logical errors. The 1000:1 overhead is the real bottleneck.",
-        "Is quantum computing going to break Bitcoin? Some say 10 years, some say never. What do people here actually think?",
-    ],
-)
-demo.launch(share=True)
+!pip install -q gradio transformers torch
+import os
+os.environ["TAKEMETER_MODEL_PATH"] = "/content/takemeter-model/checkpoint-30"
+%run gradio_demo.py
 ```
 
 **To run locally** (if the model has been downloaded from Colab):
 
 ```bash
 pip install gradio transformers torch
+export TAKEMETER_MODEL_PATH="./finetuned_model"
+python gradio_demo.py
+```
+
+On Windows PowerShell:
+
+```powershell
+$env:TAKEMETER_MODEL_PATH = ".\finetuned_model"
 python gradio_demo.py
 ```
 

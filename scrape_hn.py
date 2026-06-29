@@ -2,7 +2,7 @@
 Scrape Hacker News posts about quantum computing and save to dataset.csv.
 Uses the Algolia HN Search API — no credentials required.
 
-Run locally:  python scrape_reddit.py
+Run locally:  python scrape_hn.py
 Run in Colab: upload and run as a cell (works from any IP)
 """
 

@@ -1,26 +1,57 @@
 """
 TakeMeter — Gradio demo for the fine-tuned QC post classifier.
 
-Run this as a Colab cell (after training) or locally if you have
-the fine-tuned model saved to ./finetuned_model.
+Run this locally or in Colab after training. Set TAKEMETER_MODEL_PATH
+to the model/checkpoint directory, or use one of the default locations
+listed in DEFAULT_MODEL_CANDIDATES below.
 
-In Colab: copy the block below into a new cell and run it.
 Locally:  pip install gradio transformers torch
           python gradio_demo.py
 """
 
+import os
+from pathlib import Path
+
 import gradio as gr
 from transformers import pipeline
 
-MODEL_PATH = "./finetuned_model"
+MODEL_ENV_VAR = "TAKEMETER_MODEL_PATH"
+DEFAULT_MODEL_CANDIDATES = (
+    "./finetuned_model",
+    "./takemeter-model/checkpoint-30",
+    "/content/takemeter-model/checkpoint-30",
+    "/content/takemeter-model",
+    "/content/finetuned_model",
+)
+TOKENIZER_NAME = "distilbert-base-uncased"
+
+
+def resolve_model_path() -> str:
+    configured = os.environ.get(MODEL_ENV_VAR)
+    candidates = (configured,) if configured else DEFAULT_MODEL_CANDIDATES
+
+    for candidate in candidates:
+        if candidate and Path(candidate).expanduser().is_dir():
+            return str(Path(candidate).expanduser())
+
+    checked = ", ".join(c for c in candidates if c)
+    raise FileNotFoundError(
+        f"Model directory not found. Set {MODEL_ENV_VAR} to a fine-tuned "
+        f"checkpoint path. Checked: {checked}"
+    )
+
+
+MODEL_PATH = resolve_model_path()
 
 # Label order must match the LABEL_MAP used during training
 ID2LABEL = {0: "discussion", 1: "technical", 2: "hype"}
 
+print(f"Loading model from: {MODEL_PATH}")
 classifier = pipeline(
     "text-classification",
     model=MODEL_PATH,
-    return_all_scores=True,
+    tokenizer=TOKENIZER_NAME,
+    top_k=None,
 )
 
 
@@ -28,7 +59,9 @@ def classify_post(text: str) -> str:
     if not text.strip():
         return "Enter a post above."
 
-    raw = classifier(text[:512])[0]
+    raw = classifier(text[:512])
+    if raw and isinstance(raw[0], list):
+        raw = raw[0]
 
     # Normalise label keys — pipeline may return 'LABEL_0' or actual names
     scores = {}
